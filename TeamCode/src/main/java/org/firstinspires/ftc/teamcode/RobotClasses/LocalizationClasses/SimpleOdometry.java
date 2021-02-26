@@ -1,0 +1,105 @@
+package org.firstinspires.ftc.teamcode.RobotClasses.LocalizationClasses;
+
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+
+import org.firstinspires.ftc.teamcode.RobotClasses.Gyro;
+import org.firstinspires.ftc.teamcode.RobotClasses.MecanumDrive;
+
+import java.util.ArrayList;
+
+/**
+ * Extremely simple localization class for 3 dead-wheel odometry and no turning functionality.
+ * NOTE: trajectory/waypoint following will be accurate up to +- 1/2 of an inch.
+ */
+public class SimpleOdometry {
+    MecanumDrive drivetrain;
+    DcMotorEx leftOdometer, rightOdometer, backOdometer;
+    Vector2D currentVector2D;
+    Gyro gyro;
+
+    final double CPR = 1440.0; //counts per revolution
+    final double wheelDiameter = 1.49606; //in inches (equals 38 mm)
+
+    public SimpleOdometry(MecanumDrive drivetrain, Gyro gyro, DcMotorEx leftOdometer, DcMotorEx rightOdometer, DcMotorEx backOdometer) {
+        this.drivetrain = drivetrain;
+        this.leftOdometer = leftOdometer;
+        this.rightOdometer = rightOdometer;
+        this.backOdometer = backOdometer;
+
+        rightOdometer.setDirection(DcMotorEx.Direction.REVERSE);
+
+        currentVector2D = new Vector2D(0, 0);
+    }
+
+    public double getEncoderDistance(DcMotorEx odometer) {
+        return (odometer.getCurrentPosition() / CPR) * Math.PI * wheelDiameter;
+    }
+
+    public double calculateForwardDistance() {
+        return (getEncoderDistance(leftOdometer) + (-getEncoderDistance(rightOdometer))) / 2;
+    }
+
+    public double calculateStrafeDistance() {
+        return getEncoderDistance(backOdometer);
+    }
+
+    public Vector2D getCurrentVector2D() {
+        return currentVector2D;
+    }
+
+    public void resetPose() {
+        currentVector2D = new Vector2D(0, 0);
+    }
+
+    public boolean isAtWaypoint(Vector2D currentWaypoint, Vector2D targetWaypoint) {
+        boolean xTrue = currentWaypoint.getX() > targetWaypoint.getX() - .5 && currentWaypoint.getX() < targetWaypoint.getX() + .5;
+        boolean yTrue = currentWaypoint.getY() > targetWaypoint.getY() - .5 && currentWaypoint.getY() < targetWaypoint.getY() + .5;
+        return xTrue && yTrue;
+    }
+
+    /**
+     * Updates the odometry. Call this method at the beginning or end of every loop
+     */
+    public void update() {
+        currentVector2D = new Vector2D(calculateForwardDistance(), calculateStrafeDistance());
+    }
+
+    /**
+     * Follow a given trajectory.
+     * NOTE: the first waypoint is always the current pose. The first waypoint in the given ArrayList trajectory is
+     * treated as the second waypoint in the trajectory (the first waypoint the robot will drive towards)
+     * @param trajectory an ArrayList of waypoints for the robot to follow
+     * @param xPower the "forward" power towards the x direction
+     * @param yPower the "strafe" power towards the y direction
+     */
+    public void followTrajectory(ArrayList<Vector2D> trajectory, double xPower, double yPower) {
+        xPower = Math.abs(xPower);
+        yPower = Math.abs(yPower);
+
+        for(Vector2D waypoint : trajectory) {
+
+            update();;
+
+            xPower = waypoint.getX() > getCurrentVector2D().getX() ? xPower : -xPower;
+            yPower = waypoint.getY() > getCurrentVector2D().getY() ? yPower : -yPower;
+
+            while(!isAtWaypoint(waypoint, getCurrentVector2D())) {
+
+                update();
+
+                if(getCurrentVector2D().getX() > waypoint.getX() - .5 && getCurrentVector2D().getX() < waypoint.getX() + .5) {
+                    xPower = 0;
+                }
+                if(getCurrentVector2D().getY() > waypoint.getY() - .5 && getCurrentVector2D().getY() < waypoint.getY() + .5) {
+                    yPower = 0;
+                }
+
+                drivetrain.drive(xPower, yPower, 0);
+            }
+
+            drivetrain.drive(0, 0, 0);
+
+        }
+    }
+}
+
