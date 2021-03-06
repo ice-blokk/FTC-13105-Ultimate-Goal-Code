@@ -31,6 +31,7 @@ public class Gyro {
      */
     public double getAngle() {
         imu.getPosition();
+        angle = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
         return angle.firstAngle;
     }
 
