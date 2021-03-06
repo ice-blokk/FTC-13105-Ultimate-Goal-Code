@@ -1,9 +1,10 @@
 package org.firstinspires.ftc.teamcode.RobotClasses.LocalizationClasses;
 
-import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotor;
 
 import org.firstinspires.ftc.teamcode.RobotClasses.Gyro;
 import org.firstinspires.ftc.teamcode.RobotClasses.MecanumDrive;
+import org.firstinspires.ftc.teamcode.RobotClasses.util.Vector2D;
 
 import java.util.ArrayList;
 
@@ -13,30 +14,29 @@ import java.util.ArrayList;
  */
 public class SimpleOdometry {
     MecanumDrive drivetrain;
-    DcMotorEx leftOdometer, rightOdometer, backOdometer;
+    DcMotor leftOdometer, rightOdometer, backOdometer;
     Vector2D currentVector2D;
     Gyro gyro;
 
-    final double CPR = 1440.0; //counts per revolution
+    // Diameter of the wheel attached to the encoder
     final double wheelDiameter = 1.49606; //in inches (equals 38 mm)
+    final double CPR = 1440.0; //counts per (one) revolution of the odometer's encoder shaft
 
-    public SimpleOdometry(MecanumDrive drivetrain, Gyro gyro, DcMotorEx leftOdometer, DcMotorEx rightOdometer, DcMotorEx backOdometer) {
+    public SimpleOdometry(MecanumDrive drivetrain, Gyro gyro, DcMotor leftOdometer, DcMotor rightOdometer, DcMotor backOdometer) {
         this.drivetrain = drivetrain;
         this.leftOdometer = leftOdometer;
         this.rightOdometer = rightOdometer;
         this.backOdometer = backOdometer;
 
-        rightOdometer.setDirection(DcMotorEx.Direction.REVERSE);
-
         currentVector2D = new Vector2D(0, 0);
     }
 
-    public double getEncoderDistance(DcMotorEx odometer) {
+    public double getEncoderDistance(DcMotor odometer) {
         return (odometer.getCurrentPosition() / CPR) * Math.PI * wheelDiameter;
     }
 
     public double calculateForwardDistance() {
-        return (getEncoderDistance(leftOdometer) + (-getEncoderDistance(rightOdometer))) / 2;
+        return (getEncoderDistance(leftOdometer) + (getEncoderDistance(rightOdometer))) / 2;
     }
 
     public double calculateStrafeDistance() {
@@ -82,7 +82,7 @@ public class SimpleOdometry {
 
             xPower = waypoint.getX() > getCurrentVector2D().getX() ? xPower : -xPower;
             yPower = waypoint.getY() > getCurrentVector2D().getY() ? yPower : -yPower;
-
+            // TODO: add gyro correction
             while(!isAtWaypoint(waypoint, getCurrentVector2D())) {
 
                 update();
