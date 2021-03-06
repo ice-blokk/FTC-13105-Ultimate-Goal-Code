@@ -11,11 +11,14 @@ package org.firstinspires.ftc.teamcode.RobotClasses.util;
 public class PIDController {
     private double
             dt = 0.1, // loop interval time
+
             max = -1,
             min = 1,
+
             kP,
             kI,
-            kD,
+            kD ,
+
             prevError = 0,
             integral = 0;
 
@@ -23,6 +26,12 @@ public class PIDController {
         kP = p;
         kI = i;
         kD = d;
+    }
+
+    public PIDController() {
+        kP = 1;
+        kI = 1;
+        kD = 1;
     }
 
     public void setP(double kP) {
@@ -58,7 +67,13 @@ public class PIDController {
         this.max = max;
     }
 
-    public double calculate(double setpoint, double pv /* pv = "process value" */) {
+    /**
+     * Calculates output
+     * @param setpoint desired output
+     * @param pv "process value", input value
+     * @return calcuated output
+     */
+    public double calculate(double setpoint, double pv) {
 
         // Calculate error
         double error = setpoint - pv;
