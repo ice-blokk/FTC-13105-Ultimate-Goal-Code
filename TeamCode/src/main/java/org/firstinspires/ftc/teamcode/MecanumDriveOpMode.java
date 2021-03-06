@@ -71,15 +71,14 @@ public class MecanumDriveOpMode extends OpMode
         rightOdometer = hardwareMap.get(DcMotor.class, "frontRightDrive");
         backOdometer = hardwareMap.get(DcMotor.class, "backLeftDrive");
 
-        /*
+        // Reset encoders
         leftOdometer.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightOdometer.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backOdometer.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        leftOdometer.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rightOdometer.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        backOdometer.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        */
+        leftOdometer.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightOdometer.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        backOdometer.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // Set direction of the motors
         frontLeft.setDirection(DcMotor.Direction.FORWARD);
@@ -98,7 +97,7 @@ public class MecanumDriveOpMode extends OpMode
         drivetrain = new MecanumDrive(frontRight, frontLeft, backRight, backLeft, gyro);
 
         simpleOdometry = new SimpleOdometry(drivetrain, gyro, leftOdometer, rightOdometer, backOdometer);
-        odometry = new Odometry(drivetrain, gyro, frontLeft, frontRight, backLeft);
+        odometry = new Odometry(drivetrain, gyro, leftOdometer, rightOdometer, backOdometer);
 
         telemetry.addData("Status", "Initialized");
     }
