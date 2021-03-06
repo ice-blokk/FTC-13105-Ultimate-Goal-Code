@@ -1,8 +1,8 @@
-package org.firstinspires.ftc.teamcode.RobotClasses.LocalizationClasses;
+package org.firstinspires.ftc.teamcode.RobotClasses.util;
 
 /**
  * A class for (x, y) coordinates. Any unit can be used to represent x and y but
- * inches are used in the SimpleOdometry class
+ * inches are used in the this projects Odometry classes
  */
 public class Vector2D {
     private double x, y;

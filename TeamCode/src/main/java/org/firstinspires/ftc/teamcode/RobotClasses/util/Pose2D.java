@@ -1,12 +1,13 @@
-package org.firstinspires.ftc.teamcode.RobotClasses.LocalizationClasses;
+package org.firstinspires.ftc.teamcode.RobotClasses.util;
+
+import org.firstinspires.ftc.teamcode.RobotClasses.util.Vector2D;
 
 /**
- * A class for (x, y) coordinates and rotation of the robot measured in angles.
+ * A class for (x, y) coordinates and rotation of the robot.
  * Any unit can be used to represent x, y, and the angle but inches and degrees are used in
  * the Odometry classes in this project.
  */
 public class Pose2D {
-    private Vector2D vector2D;
     private double x, y, angle;
 
     public Pose2D(double x, double y, double angle) {
