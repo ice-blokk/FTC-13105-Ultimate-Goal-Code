@@ -44,14 +44,15 @@ public class MecanumDrive {
         double x = strafe;
         double rx = turn;
 
-
+        // Field oriented math
         if(isFieldOriented) {
             double angle = Math.toRadians(gyro.getAngle());
-            double temp = -y * Math.cos(angle) + x * Math.sin(angle);
+            double temp = y * Math.cos(angle) + -x * Math.sin(angle);
             x = y * Math.sin(angle) + x * Math.cos(angle);
             y = temp;
         }
 
+        // Set motor power
         frontLeftPower = y + x - rx;
         backLeftPower = y - x + rx;
         frontRightPower = y - x - rx;
