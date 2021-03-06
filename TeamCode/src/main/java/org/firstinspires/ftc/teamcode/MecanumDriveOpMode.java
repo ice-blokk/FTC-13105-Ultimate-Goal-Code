@@ -30,11 +30,9 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.RobotClasses.Gyro;
@@ -43,7 +41,6 @@ import org.firstinspires.ftc.teamcode.RobotClasses.MecanumDrive;
 import org.firstinspires.ftc.teamcode.RobotClasses.LocalizationClasses.SimpleOdometry;
 
 @TeleOp(name="Basic: Mecanum Drive Op Mode", group="Iterative Opmode")
-@Disabled
 public class MecanumDriveOpMode extends OpMode
 {
     private ElapsedTime runtime = new ElapsedTime();
@@ -53,7 +50,7 @@ public class MecanumDriveOpMode extends OpMode
     private DcMotor backLeft;
     private DcMotor backRight;
 
-    private DcMotorEx leftOdometer, rightOdometer, backOdometer;
+    private DcMotor leftOdometer, rightOdometer, backOdometer;
     private BNO055IMU imu;
 
     private MecanumDrive drivetrain;
@@ -70,24 +67,38 @@ public class MecanumDriveOpMode extends OpMode
         backLeft = hardwareMap.get(DcMotor.class, "backLeftDrive");
         backRight = hardwareMap.get(DcMotor.class, "backRightDrive");
 
-        // idk if this actually needs to be here
+        leftOdometer = hardwareMap.get(DcMotor.class, "frontLeftDrive");
+        rightOdometer = hardwareMap.get(DcMotor.class, "frontRightDrive");
+        backOdometer = hardwareMap.get(DcMotor.class, "backLeftDrive");
 
-        frontLeft.setDirection(DcMotor.Direction.REVERSE);
-        frontRight.setDirection(DcMotor.Direction.FORWARD);
+        /*
+        leftOdometer.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightOdometer.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backOdometer.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        leftOdometer.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightOdometer.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        backOdometer.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        */
+
+        // Set direction of the motors
+        frontLeft.setDirection(DcMotor.Direction.FORWARD);
+        frontRight.setDirection(DcMotor.Direction.REVERSE);
         backLeft.setDirection(DcMotor.Direction.REVERSE);
         backRight.setDirection(DcMotor.Direction.FORWARD);
 
-        drivetrain = new MecanumDrive(frontRight, frontLeft, backRight, backLeft, gyro);
-
-        leftOdometer = hardwareMap.get(DcMotorEx.class, "frontLeftDrive");
-        rightOdometer = hardwareMap.get(DcMotorEx.class, "frontRightDrive");
-        backOdometer = hardwareMap.get(DcMotorEx.class, "backRightDrive");
+        frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         imu = hardwareMap.get(BNO055IMU.class, "imu");
         gyro = new Gyro(imu);
 
+        drivetrain = new MecanumDrive(frontRight, frontLeft, backRight, backLeft, gyro);
+
         simpleOdometry = new SimpleOdometry(drivetrain, gyro, leftOdometer, rightOdometer, backOdometer);
-        odometry = new Odometry(drivetrain, gyro, leftOdometer, rightOdometer, backOdometer);
+        odometry = new Odometry(drivetrain, gyro, frontLeft, frontRight, backLeft);
 
         telemetry.addData("Status", "Initialized");
     }
@@ -105,8 +116,9 @@ public class MecanumDriveOpMode extends OpMode
     @Override
     public void loop() {
 
-        simpleOdometry.update();
-        odometry.update();
+        if(gamepad1.a){
+            simpleOdometry.resetPose();
+        }
 
         double forward = gamepad1.left_stick_y;
         double strafe = gamepad1.left_stick_x;
@@ -121,6 +133,12 @@ public class MecanumDriveOpMode extends OpMode
         telemetry.addData("Odometry", "X: " + odometry.getCurrentPose().getX());
         telemetry.addData("Odometry", "Y: " + odometry.getCurrentPose().getY());
         telemetry.addData("Odometry", "Angle: " + odometry.getCurrentPose().getRotation());
+        telemetry.addData("LeftEncoder", "Val: " + leftOdometer.getCurrentPosition());
+        telemetry.addData("RightEncoder", "Val: " + rightOdometer.getCurrentPosition());
+        telemetry.addData("backEncoder", "Val: " + backOdometer.getCurrentPosition());
+
+        simpleOdometry.update();
+        odometry.update();
 
     }
 
