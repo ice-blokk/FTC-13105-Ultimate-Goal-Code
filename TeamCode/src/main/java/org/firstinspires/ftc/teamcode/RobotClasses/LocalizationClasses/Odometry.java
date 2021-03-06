@@ -1,16 +1,18 @@
 package org.firstinspires.ftc.teamcode.RobotClasses.LocalizationClasses;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.firstinspires.ftc.teamcode.RobotClasses.Gyro;
 import org.firstinspires.ftc.teamcode.RobotClasses.MecanumDrive;
+import org.firstinspires.ftc.teamcode.RobotClasses.util.Pose2D;
+import org.firstinspires.ftc.teamcode.RobotClasses.util.Vector2D;
 
 /**
  * Localization class for 3 wheel Odometry. This class is based on Centennial High School FTC (Team VIRUS #9866).
  * <a href = https://github.com/Centennial-FTC-Robotics/Virus2019-2020/blob/master/TeamCode/src/main/java/org/virus/agobot/Odometry.java>
- *     This was the code I used for the math. </a>
- * A derivation of the math used can be found <a href = https://drive.google.com/drive/u/1/folders/1b67UYvB0yLR7qvaCotbuCF70fAjkADr4>here.</a>
+ *     This was the Java document </a>I adapted code from.
+ * A derivation of the math from the same team used can
+ * be found <a href = https://drive.google.com/file/d/11c3Z9EkDj2_GuOQSFzpVzba_HPKqD6ej/view>here.</a>
  */
 public class Odometry extends SimpleOdometry {
     MecanumDrive drivetrain;
@@ -18,7 +20,7 @@ public class Odometry extends SimpleOdometry {
 
     Pose2D currentPose;
 
-    DcMotorEx leftOdometer, rightOdometer, backOdometer;
+    DcMotor leftOdometer, rightOdometer, backOdometer;
 
     double deltaLeftEncoder, deltaRightEncoder, deltaBackEncoder;
     double leftEncoderPrev, rightEncoderPrev, backEncoderPrev;
@@ -31,24 +33,37 @@ public class Odometry extends SimpleOdometry {
     final double length = 17.0; // in inches
 
     final double ENCODER_COUNTS_PER_INCH = CPR / (wheelDiameter * Math.PI);
-    // TODO: change these numbers
     final double RADIUS = trackwidth / 2.0; // in inches, the distance from the middle of the robot to the left/right odometer
-    final double BACK_RADIUS = 0; //in inches, the distance from the back odometer to the left/right odometer
+    final double BACK_RADIUS = length / 2.0; //in inches, the distance from the middle of the robot (length-wise) to the back odometer
 
     Vector2D robotCentricDelta;
 
-    public Odometry(MecanumDrive drivetrain, Gyro gyro, DcMotorEx leftOdometer, DcMotorEx rightOdometer, DcMotorEx backOdometer) {
+    public Odometry(MecanumDrive drivetrain, Gyro gyro, DcMotor leftOdometer, DcMotor rightOdometer, DcMotor backOdometer) {
         super(drivetrain, gyro, leftOdometer, rightOdometer, backOdometer);
+        this.leftOdometer = leftOdometer;
+        this.rightOdometer = rightOdometer;
+        this.backOdometer = rightOdometer;
+
+        this.gyro = gyro;
+        this.drivetrain = drivetrain;
 
         currentPose = new Pose2D(0, 0, gyro.getAngle());
     }
 
+    /**
+     * Resets all encoders (duh)
+     */
     public void resetAllEncoders() {
         leftOdometer.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightOdometer.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backOdometer.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
 
+    /**
+     * Normalize a radian measure to [0, 2pi]
+     * @param angleRadians angle measure in radians
+     * @return an equivalent angle measure from 0 to 2pi (in radians obv).
+     */
     public double normalizeRadians(double angleRadians) {
         while(angleRadians > 2 * Math.PI) {
             angleRadians -= 2 * Math.PI;
@@ -59,14 +74,26 @@ public class Odometry extends SimpleOdometry {
         return angleRadians;
     }
 
+    /**
+     *
+     * @return current position of left encoder
+     */
     public double getLeftPosition() {
         return leftOdometer.getCurrentPosition();
     }
 
+    /**
+     *
+     * @return current position of right encoder (corrected for direction)
+     */
     public double getRightPosition() {
-        return rightOdometer.getCurrentPosition() * -1;
+        return rightOdometer.getCurrentPosition();
     }
 
+    /**
+     *
+     * @return current position of back encoder (correction for direction)
+     */
     public double getBackPosition() {
         return backOdometer.getCurrentPosition() * -1;
     }
@@ -78,17 +105,35 @@ public class Odometry extends SimpleOdometry {
      * @return distance the encoder wheel has traveled in inches
      */
     public double countToInch(double count) {
-        return (count / CPR) * Math.PI * wheelDiameter;
+        return (count / super.CPR) * Math.PI * super.wheelDiameter;
     }
 
     public Pose2D getCurrentPose() {
         return currentPose;
     }
 
+    /**
+     * Sets the current pose to one specified by the user. NOTE: There is a secondary setPose2D method
+     * that accepts a pose rather than it's parameters.
+     * @param x
+     * @param y
+     * @param rotation in degrees
+     */
+    public void setPose2D(double x, double y, double rotation) {
+        currentPose = new Pose2D(x, y, rotation);
+    }
+
+    public void setPose2D(Pose2D pose) {
+        currentPose = pose;
+    }
+
     public Vector2D getRobotCentricDelta() {
         return robotCentricDelta;
     }
 
+    /**
+     * Updates the current pose of the robot
+     */
     public void update() {
         deltaLeftEncoder = getLeftPosition() - leftEncoderPrev;
         deltaRightEncoder = getRightPosition() - rightEncoderPrev;
