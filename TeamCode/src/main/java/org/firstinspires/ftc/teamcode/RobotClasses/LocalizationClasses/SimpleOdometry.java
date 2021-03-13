@@ -2,8 +2,8 @@ package org.firstinspires.ftc.teamcode.RobotClasses.LocalizationClasses;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 
-import org.firstinspires.ftc.teamcode.RobotClasses.Gyro;
-import org.firstinspires.ftc.teamcode.RobotClasses.MecanumDrive;
+import org.firstinspires.ftc.teamcode.RobotClasses.Subsystems.Gyro;
+import org.firstinspires.ftc.teamcode.RobotClasses.Subsystems.MecanumDrive;
 import org.firstinspires.ftc.teamcode.RobotClasses.util.Vector2D;
 
 import java.util.ArrayList;
@@ -18,8 +18,7 @@ public class SimpleOdometry {
     Vector2D currentVector2D;
     Gyro gyro;
 
-    // Diameter of the wheel attached to the encoder
-    final double wheelDiameter = 1.49606; //in inches (equals 38 mm)
+    final double WHEEL_DIAMETER = 1.49606; // Diameter of the wheel attached to the encoder in inches (equals 38 mm)
     final double CPR = 1440.0; //counts per (one) revolution of the odometer's encoder shaft
 
     public SimpleOdometry(MecanumDrive drivetrain, Gyro gyro, DcMotor leftOdometer, DcMotor rightOdometer, DcMotor backOdometer) {
@@ -32,7 +31,7 @@ public class SimpleOdometry {
     }
 
     public double getEncoderDistance(DcMotor odometer) {
-        return (odometer.getCurrentPosition() / CPR) * Math.PI * wheelDiameter;
+        return (odometer.getCurrentPosition() / CPR) * Math.PI * WHEEL_DIAMETER;
     }
 
     public double calculateForwardDistance() {
