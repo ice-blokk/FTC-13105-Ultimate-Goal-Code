@@ -30,8 +30,8 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -42,11 +42,11 @@ import org.firstinspires.ftc.teamcode.RobotClasses.LocalizationClasses.SimpleOdo
 import org.firstinspires.ftc.teamcode.RobotClasses.Subsystems.Grabber;
 import org.firstinspires.ftc.teamcode.RobotClasses.Subsystems.Gyro;
 import org.firstinspires.ftc.teamcode.RobotClasses.Subsystems.Intake;
-import org.firstinspires.ftc.teamcode.RobotClasses.Subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.RobotClasses.Subsystems.MecanumDrive;
+import org.firstinspires.ftc.teamcode.RobotClasses.Subsystems.Shooter;
 
-@TeleOp(name="Main: Teleop", group="Iterative Opmode")
-public class MainTeleop extends OpMode
+@Autonomous(name="Main: Autonomous", group="Autonomous")
+public class MainAuto extends OpMode
 {
     private ElapsedTime runtime = new ElapsedTime();
 
@@ -72,7 +72,6 @@ public class MainTeleop extends OpMode
     private Odometry odometry;
     private SimpleOdometry simpleOdometry;
 
-    boolean x_boolean, y_boolean;
 
     @Override
     public void init() {
@@ -125,12 +124,6 @@ public class MainTeleop extends OpMode
         odometry = new Odometry(drivetrain, gyro, leftOdometer, rightOdometer, backOdometer);
         simpleOdometry = new SimpleOdometry(drivetrain, gyro, leftOdometer, rightOdometer, backOdometer);
 
-
-        // Toggle Booleans
-        x_boolean = false;
-        y_boolean = false;
-
-
         telemetry.addData("Status", "Initialized");
     }
 
@@ -150,62 +143,41 @@ public class MainTeleop extends OpMode
         odometry.update();
         simpleOdometry.update();
 
+        shooter.setIndexer(-90);
+
         // Driving
-        double forward = gamepad1.left_stick_y;
-        double strafe = gamepad1.left_stick_x;
-        double turn = gamepad1.right_stick_x;
-
-        if(Math.abs(turn) > 0) {
-            drivetrain.driveStraight(forward, strafe);
+        if(simpleOdometry.getCurrentVector2D().getX() < 60) {
+            drivetrain.driveStraight(.7, 0);
         }
-        else{
-            drivetrain.drive(forward, strafe, turn);
+        else if(simpleOdometry.getCurrentVector2D().getX() > 60 && gyro.getAngle() > -90) {
+            drivetrain.drive(0, 0, -.5);
         }
-
-
-        // Toggle booleans
-        if(gamepad1.x) {
-            x_boolean = !x_boolean;
-        }
-        if(gamepad1.y) {
-            y_boolean = !y_boolean;
-        }
-
-        // Intake On/Off
-        if(gamepad1.x) {
-            intake.on();
-        }
-        else if(gamepad1.b) {
-            intake.reverse();
-        }
-        else {
-            intake.off();
-        }
-
-        // Shooter On/Off
-        if(gamepad1.right_trigger > 0) {
+        else if(simpleOdometry.getCurrentVector2D().getX() >= 60 && gyro.getAngle() <= -90) {
+            double currentTime = getRuntime();
             shooter.on();
+            if(currentTime == currentTime + .5) {
+                shooter.setIndexer(90);
+            }
+            else if(currentTime == currentTime + 1) {
+                shooter.setIndexer(-90);
+            }
+            else if(currentTime == currentTime + 1.5) {
+                shooter.setIndexer(90);
+            }
+            else if(currentTime == currentTime + 2) {
+                shooter.setIndexer(-90);
+            }
+            else if(currentTime == currentTime + 2.5) {
+                shooter.setIndexer(90);
+            }
+            else if(currentTime == currentTime + 3) {
+                shooter.setIndexer(-90);
+            }
+
         }
         else {
+            drivetrain.drive(0, 0, 0);
             shooter.off();
-        }
-
-        // Indexer
-        if(gamepad1.a) {
-            shooter.setIndexer(90);
-        }
-        else {
-            shooter.setIndexer(-90);
-        }
-
-        if(gamepad1.dpad_down) {
-            grabber.armDown();
-        }
-        else if(gamepad1.dpad_up) {
-            grabber.armUp();
-        }
-        else {
-            grabber.off();
         }
 
 
@@ -225,6 +197,44 @@ public class MainTeleop extends OpMode
 
     @Override
     public void stop() {
+    }
+
+    public void forwardInches(double power, double inches) {
+        if(simpleOdometry.getCurrentVector2D().getX() < inches) {
+            drivetrain.driveStraight(power, 0);
+        }
+        else {
+            drivetrain.drive(0, 0, 0);
+        }
+    }
+
+    public void strafeInches(double power, double inches) {
+        if(Math.abs(simpleOdometry.getCurrentVector2D().getY()) < inches) {
+            drivetrain.driveStraight(0, power * Math.copySign(1, simpleOdometry.getCurrentVector2D().getY() * -1));
+        }
+        else {
+            drivetrain.drive(0, 0, 0);
+        }
+    }
+
+    public void turnAngle(double power, double angle) {
+        double current = Math.abs(gyro.getAngle());
+        double target = Math.abs(current + angle);
+        if(Math.abs(gyro.getAngle()) < target) {
+            drivetrain.drive(0, 0, power);
+        }
+        else {
+            drivetrain.drive(0, 0, 0);
+        }
+
+    }
+
+    public void autoShoot(double times) {
+        shooter.on();
+        for(int i = 0; i < times; i++) {
+            shooter.runIndexer();
+        }
+        shooter.off();
     }
 
 }
