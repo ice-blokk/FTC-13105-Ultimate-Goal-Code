@@ -1,7 +1,9 @@
-package org.firstinspires.ftc.teamcode.RobotClasses;
+package org.firstinspires.ftc.teamcode.RobotClasses.Subsystems;
 
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 /**
  * A class for a shooter with a servo.
@@ -12,13 +14,15 @@ public class Shooter {
     private DcMotorEx shooterMotor;
     private Servo indexer;
 
+    private ElapsedTime time = new ElapsedTime();
+
     private double velocity;
 
     public Shooter(DcMotorEx shooterMotor, Servo indexer) {
         this.shooterMotor = shooterMotor;
         this.indexer = indexer;
 
-        velocity = 6000;
+        velocity = 5500;
     }
 
     public void on() {
@@ -33,7 +37,7 @@ public class Shooter {
         velocity = this.velocity;
     }
 
-    public void set(double p) {
+    public void setShooterPower(double p) {
         shooterMotor.setPower(p);
     }
 
@@ -45,12 +49,16 @@ public class Shooter {
         shooterMotor.setVelocityPIDFCoefficients(p, i , d, f);
     }
 
-    public DcMotorEx getMotor() {
-        return shooterMotor;
+    public void runIndexer() {
+        time.startTime();
+        if(time.seconds() < .4) {
+            indexer.setPosition(90);
+        }
+        indexer.setPosition(-90);
     }
 
-    public void runIndexer() {
-        indexer.setPosition(180);
-        indexer.setPosition(0);
+    public void setIndexer(double val) {
+        indexer.setPosition(val);
     }
+
 }
