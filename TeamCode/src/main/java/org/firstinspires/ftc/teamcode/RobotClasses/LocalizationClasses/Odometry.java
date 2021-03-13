@@ -2,8 +2,8 @@ package org.firstinspires.ftc.teamcode.RobotClasses.LocalizationClasses;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 
-import org.firstinspires.ftc.teamcode.RobotClasses.Gyro;
-import org.firstinspires.ftc.teamcode.RobotClasses.MecanumDrive;
+import org.firstinspires.ftc.teamcode.RobotClasses.Subsystems.Gyro;
+import org.firstinspires.ftc.teamcode.RobotClasses.Subsystems.MecanumDrive;
 import org.firstinspires.ftc.teamcode.RobotClasses.util.Pose2D;
 import org.firstinspires.ftc.teamcode.RobotClasses.util.Vector2D;
 
@@ -27,12 +27,13 @@ public class Odometry extends SimpleOdometry {
     double deltaHeading;
     double deltaX, deltaY;
 
-    double heading = 0, startHeading = 0, headingCorrection = 0;
+    double heading, startHeading, headingCorrection;
+    double xPos, yPos;
 
     final double trackwidth = 16.0; //in inches
     final double length = 17.0; // in inches
 
-    final double ENCODER_COUNTS_PER_INCH = CPR / (wheelDiameter * Math.PI);
+    final double ENCODER_COUNTS_PER_INCH = super.CPR / (super.WHEEL_DIAMETER * Math.PI);
     final double RADIUS = trackwidth / 2.0; // in inches, the distance from the middle of the robot to the left/right odometer
     final double BACK_RADIUS = length / 2.0; //in inches, the distance from the middle of the robot (length-wise) to the back odometer
 
@@ -48,6 +49,13 @@ public class Odometry extends SimpleOdometry {
         this.drivetrain = drivetrain;
 
         currentPose = new Pose2D(0, 0, gyro.getAngle());
+
+        heading = 0;
+        startHeading = 0;
+        headingCorrection = 0;
+
+        xPos = 0;
+        yPos = 0;
     }
 
     /**
@@ -105,7 +113,7 @@ public class Odometry extends SimpleOdometry {
      * @return distance the encoder wheel has traveled in inches
      */
     public double countToInch(double count) {
-        return (count / super.CPR) * Math.PI * super.wheelDiameter;
+        return (count / super.CPR) * Math.PI * super.WHEEL_DIAMETER;
     }
 
     public Pose2D getCurrentPose() {
@@ -131,6 +139,10 @@ public class Odometry extends SimpleOdometry {
         return robotCentricDelta;
     }
 
+    public double getDeltaX() {
+        return countToInch(deltaX);
+    }
+
     /**
      * Updates the current pose of the robot
      */
@@ -151,14 +163,20 @@ public class Odometry extends SimpleOdometry {
             deltaY = (deltaBackEncoder + deltaRightEncoder) / 2.0;
         }
         else {
-            double turnRadius = 2.0 * RADIUS * ENCODER_COUNTS_PER_INCH * (deltaLeftEncoder + deltaRightEncoder) / (deltaRightEncoder - deltaLeftEncoder);
+            double turnRadius = RADIUS * ENCODER_COUNTS_PER_INCH * (deltaLeftEncoder + deltaRightEncoder) / (deltaRightEncoder - deltaLeftEncoder);
             double strafeRadius = deltaBackEncoder / deltaHeading - BACK_RADIUS * ENCODER_COUNTS_PER_INCH;
 
             deltaX = turnRadius * (Math.cos(deltaHeading) - 1) + strafeRadius * Math.sin(deltaHeading);
             deltaY = turnRadius * Math.sin(deltaHeading) + strafeRadius * (1 - Math.cos(deltaHeading));
         }
 
+
+
         robotCentricDelta = new Vector2D(countToInch(deltaX), countToInch(deltaY));
-        currentPose = new Pose2D(robotCentricDelta, gyro.getAngle());
+
+        xPos += robotCentricDelta.getX();
+        yPos += robotCentricDelta.getY();
+
+        currentPose = new Pose2D(xPos, yPos, gyro.getAngle());
     }
 }
