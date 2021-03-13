@@ -1,12 +1,21 @@
-package org.firstinspires.ftc.teamcode.RobotClasses;
+package org.firstinspires.ftc.teamcode.RobotClasses.Subsystems;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.teamcode.RobotClasses.Subsystems.Gyro;
+import org.firstinspires.ftc.teamcode.RobotClasses.util.Vector2D;
+
+/**
+ * Drivetrain specs:
+ *  The HD Hex Motors with the UltraPlanetary GearBox Kit has a free speed of 6000 RPM.
+ *  The gear ratio on our drivetrain is 15:1 so the max theoretical free speed is 400 RPM.
+ *  The drivetrain's wheel diameter is 96 mm (3.77953 in)
+ *  So the theoretical free speed of our robot is 2.01087 m/s (79.1681 in/s)
+ */
+
 /**
  * Class for simple control of a mecanum drivetrain.
- * NOTE: The HD Hex Motors with the UltraPlanetary GearBox Kit has a free speed of 6000 RPM.
- * The gear ratio on our driveetrain is 15:1 so the max theoretical free speed is 400 RPM.
  */
 public class MecanumDrive {
     private DcMotor frontRight;
@@ -40,24 +49,40 @@ public class MecanumDrive {
     public void drive(double forward, double strafe, double turn, boolean isFieldOriented) {
         double frontLeftPower, backLeftPower, frontRightPower, backRightPower;
 
-        double y = -forward; // this is reversed
+        double y = -forward;
         double x = strafe;
         double rx = turn;
 
         // Field oriented math
         if(isFieldOriented) {
+
+            /* Old field oriented code
             double angle = Math.toRadians(gyro.getAngle());
-            double temp = y * Math.cos(angle) + -x * Math.sin(angle);
-            x = y * Math.sin(angle) + x * Math.cos(angle);
+            double temp = y * Math.cos(angle) + x * Math.sin(angle);
+            x = y * Math.sin(angle) + -x * Math.cos(angle);
             y = temp;
+             */
+            Vector2D input = new Vector2D(x, y);
+            input.rotate(-gyro.getAngle());
+
+            frontLeftPower = input.getX() + input.getY() + rx;
+            frontRightPower = -input.getX() + input.getY() - rx;
+            backLeftPower = -input.getX() + input.getY() + rx;
+            backRightPower = input.getX() + input.getY() - rx;
         }
+        else {
 
-        // Set motor power
-        frontLeftPower = y + x - rx;
-        backLeftPower = y - x + rx;
-        frontRightPower = y - x - rx;
-        backRightPower = y + x - rx;
+            y = -forward; // this is reversed
+            x = strafe;
+            rx = turn;
 
+            // Set motor power
+            frontLeftPower = y + x - rx;
+            backLeftPower = y - x + rx;
+            frontRightPower = y - x - rx;
+            backRightPower = y + x - rx;
+
+        }
 
         // if one of the powers is over 1 (or maxSpeedCap), divide them by the max so that all motor powers stay the same ratio
         // (so that they're not over 1 or the maxSpeedCap)
@@ -108,35 +133,13 @@ public class MecanumDrive {
         speedMultiplier = Range.clip(Math.abs(multiplier), 0, 1);
     }
 
-    /**
-     *
-     * @return double - current encoder position of frontRight motor
-     */
-    public int getFrontRightPosition() {
-        return frontRight.getCurrentPosition();
+    public void driveStraight(double forward, double strafe) {
+        double setpoint = gyro.getAngle();
+        double offset = setpoint - (gyro.getAngle() * .05);
+
+        drive(forward, strafe, offset);
+
     }
 
-    /**
-     *
-     * @return double - current encoder position of front left motor
-     */
-    public int getFrontLeftPosition() {
-        return frontLeft.getCurrentPosition();
-    }
 
-    /**
-     *
-     * @return double - current encoder position of back left motor
-     */
-    public int getBackLeftPosition() {
-        return backLeft.getCurrentPosition();
-    }
-
-    /**
-     *
-     * @return double - current encoder position of back right motor
-     */
-    public int getBackRightPosition() {
-        return backRight.getCurrentPosition();
-    }
 }
