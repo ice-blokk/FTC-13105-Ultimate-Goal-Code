@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.RobotClasses;
+package org.firstinspires.ftc.teamcode.RobotClasses.Subsystems;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.Range;
@@ -13,7 +13,7 @@ public class Intake {
     public Intake(DcMotor intakeMotor) {
         this.intakeMotor = intakeMotor;
 
-        power = -.5;
+        power = -1;
     }
 
     /**
@@ -27,7 +27,7 @@ public class Intake {
      * Turns off the intake motor
      */
     public void off() {
-        intakeMotor.setPower(power);
+        intakeMotor.setPower(0);
     }
 
     /**
