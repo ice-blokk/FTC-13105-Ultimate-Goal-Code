@@ -18,6 +18,8 @@ public class SimpleOdometry {
     Vector2D currentVector2D;
     Gyro gyro;
 
+    double xPos, yPos;
+
     final double WHEEL_DIAMETER = 1.49606; // Diameter of the wheel attached to the encoder in inches (equals 38 mm)
     final double CPR = 1440.0; //counts per (one) revolution of the odometer's encoder shaft
 
@@ -47,7 +49,8 @@ public class SimpleOdometry {
     }
 
     public void resetPose() {
-        currentVector2D = new Vector2D(0, 0);
+        xPos = 0;
+        yPos = 0;
     }
 
     public boolean isAtWaypoint(Vector2D currentWaypoint, Vector2D targetWaypoint) {
@@ -60,7 +63,9 @@ public class SimpleOdometry {
      * Updates the odometry. Call this method at the beginning or end of every loop
      */
     public void update() {
-        currentVector2D = new Vector2D(calculateForwardDistance(), calculateStrafeDistance());
+        xPos = calculateForwardDistance();
+        yPos = calculateStrafeDistance();
+        currentVector2D = new Vector2D(xPos, yPos);
     }
 
     /**
@@ -77,7 +82,7 @@ public class SimpleOdometry {
 
         for(Vector2D waypoint : trajectory) {
 
-            update();;
+            update();
 
             xPower = waypoint.getX() > getCurrentVector2D().getX() ? xPower : -xPower;
             yPower = waypoint.getY() > getCurrentVector2D().getY() ? yPower : -yPower;
