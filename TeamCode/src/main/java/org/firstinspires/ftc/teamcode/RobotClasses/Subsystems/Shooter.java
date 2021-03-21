@@ -34,7 +34,7 @@ public class Shooter {
     }
 
     public void setDefaultVelocity(double velocity) {
-        velocity = this.velocity;
+        this.velocity = velocity;
     }
 
     public void setShooterPower(double p) {
