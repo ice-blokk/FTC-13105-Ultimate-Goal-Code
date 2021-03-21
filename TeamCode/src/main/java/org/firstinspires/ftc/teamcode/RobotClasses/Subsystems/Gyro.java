@@ -12,13 +12,14 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
  */
 public class Gyro {
     private BNO055IMU imu;
+    private BNO055IMU.Parameters parameters;
 
     Orientation angle;
 
     public Gyro(BNO055IMU imu) {
         this.imu = imu;
 
-        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+        parameters = new BNO055IMU.Parameters();
         parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
         imu.initialize(parameters);
 
@@ -50,6 +51,11 @@ public class Gyro {
         }
 
         return angle;
+    }
+
+    public void resetGyro() {
+        imu.close();
+        imu.initialize(parameters);
     }
 
 }
