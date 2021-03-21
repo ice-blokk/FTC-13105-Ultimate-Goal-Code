@@ -12,8 +12,8 @@ public class PIDController {
     private double
             dt = 0.1, // loop interval time
 
-            max = -1,
-            min = 1,
+            max = 1,
+            min = -1,
 
             kP,
             kI,
@@ -29,9 +29,10 @@ public class PIDController {
     }
 
     public PIDController() {
-        kP = 1;
-        kI = 1;
-        kD = 1;
+        // These are ok constants
+        kP = 1.2;
+        kI = .0001;
+        kD = .1;
     }
 
     public void setP(double kP) {
@@ -73,7 +74,7 @@ public class PIDController {
      * @param pv "process value", input value
      * @return calcuated output
      */
-    public double calculate(double setpoint, double pv) {
+    public double calculate(double pv, double setpoint) {
 
         // Calculate error
         double error = setpoint - pv;
