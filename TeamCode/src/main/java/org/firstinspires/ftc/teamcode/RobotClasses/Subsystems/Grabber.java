@@ -12,23 +12,29 @@ public class Grabber {
         this.arm = arm;
         this.grabber = grabber;
 
-        grabberOpen = 90;
-        grabberClosed = -10;
+        grabberOpen = 0;
+        grabberClosed = 90;
         arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
 
-    public void armDown() {
-        if(arm.getCurrentPosition() < 180) {
-            arm.setPower(.5);
-        }
+    public void down() {
+            arm.setPower(.25);
     }
 
-    public void armUp() {
-        if(arm.getCurrentPosition() > 0) {
-            arm.setPower(-.5);
-        }
+    public void up() {
+            arm.setPower(-.25);
+    }
+
+    public void armSetDown() {
+        arm.setTargetPosition(1500);
+        arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    }
+
+    public void armSetUp() {
+        arm.setTargetPosition(0);
+        arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
 
     public void off() {
