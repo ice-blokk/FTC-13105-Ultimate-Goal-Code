@@ -6,6 +6,7 @@ import org.firstinspires.ftc.teamcode.RobotClasses.Subsystems.Gyro;
 import org.firstinspires.ftc.teamcode.RobotClasses.Subsystems.MecanumDrive;
 import org.firstinspires.ftc.teamcode.RobotClasses.util.Pose2D;
 import org.firstinspires.ftc.teamcode.RobotClasses.util.Vector2D;
+import org.firstinspires.ftc.teamcode.RobotClasses.util.VirusVector2D;
 
 /**
  * Localization class for 3 wheel Odometry. This class is based on Centennial High School FTC (Team VIRUS #9866).
@@ -27,15 +28,15 @@ public class Odometry extends SimpleOdometry {
     double deltaHeading;
     double deltaX, deltaY;
 
-    double heading, startHeading, headingCorrection;
-    double xPos, yPos;
+    double heading, startHeading, headingCorrection, prevHeading;
+    double xPos, yPos, anglePos;
 
     final double trackwidth = 16.0; //in inches
     final double length = 17.0; // in inches
 
-    final double ENCODER_COUNTS_PER_INCH = super.CPR / (super.WHEEL_DIAMETER * Math.PI);
+    final double ENCODER_COUNTS_PER_INCH = super.CPR / (WHEEL_DIAMETER * Math.PI);
     final double RADIUS = trackwidth / 2.0; // in inches, the distance from the middle of the robot to the left/right odometer
-    final double BACK_RADIUS = length / 2.0; //in inches, the distance from the middle of the robot (length-wise) to the back odometer
+    final double BACK_RADIUS = 0.1; //length / 2.0; //in inches, the distance from the middle of the robot (length-wise) to the back odometer
 
     Vector2D robotCentricDelta;
 
@@ -43,7 +44,7 @@ public class Odometry extends SimpleOdometry {
         super(drivetrain, gyro, leftOdometer, rightOdometer, backOdometer);
         this.leftOdometer = leftOdometer;
         this.rightOdometer = rightOdometer;
-        this.backOdometer = rightOdometer;
+        this.backOdometer = backOdometer;
 
         this.gyro = gyro;
         this.drivetrain = drivetrain;
@@ -53,9 +54,11 @@ public class Odometry extends SimpleOdometry {
         heading = 0;
         startHeading = 0;
         headingCorrection = 0;
+        prevHeading = 0;
 
         xPos = 0;
         yPos = 0;
+        anglePos = 0;
     }
 
     /**
@@ -135,12 +138,23 @@ public class Odometry extends SimpleOdometry {
         currentPose = pose;
     }
 
+    public void resetPose() {
+        xPos = 0;
+        yPos = 0;
+    }
+
     public Vector2D getRobotCentricDelta() {
         return robotCentricDelta;
     }
 
-    public double getDeltaX() {
-        return countToInch(deltaX);
+    public double getDeltaBackEncoder() {
+        return deltaBackEncoder;
+    }
+
+    public Vector2D getRotatedVector() {
+        Vector2D tempVector = new Vector2D(xPos, yPos);
+        tempVector.rotate(Math.toDegrees(anglePos));
+        return tempVector;
     }
 
     /**
@@ -156,6 +170,14 @@ public class Odometry extends SimpleOdometry {
         backEncoderPrev = getBackPosition();
 
         deltaHeading = (deltaRightEncoder - deltaLeftEncoder) / (2.0 * RADIUS * ENCODER_COUNTS_PER_INCH); // in radians
+
+        /*
+        heading = Math.toRadians(gyro.getAngle());
+        deltaHeading = heading - prevHeading;
+        prevHeading = Math.toRadians(gyro.getAngle());
+
+         */
+
         heading = normalizeRadians((getRightPosition() - getLeftPosition())) / (2.0 * RADIUS * ENCODER_COUNTS_PER_INCH) + startHeading + headingCorrection;
 
         if(deltaHeading == 0) {
@@ -170,13 +192,17 @@ public class Odometry extends SimpleOdometry {
             deltaY = turnRadius * Math.sin(deltaHeading) + strafeRadius * (1 - Math.cos(deltaHeading));
         }
 
-
-
         robotCentricDelta = new Vector2D(countToInch(deltaX), countToInch(deltaY));
 
-        xPos += robotCentricDelta.getX();
-        yPos += robotCentricDelta.getY();
+        anglePos += deltaHeading;
+
+        VirusVector2D tempVector = new VirusVector2D(countToInch(deltaY), countToInch(-deltaX));
+        tempVector.rotate(Math.toRadians(gyro.getAngle()));
+
+        xPos += tempVector.getComponent(0);
+        yPos += tempVector.getComponent(1);
 
         currentPose = new Pose2D(xPos, yPos, gyro.getAngle());
+
     }
 }
