@@ -39,11 +39,15 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.RobotClasses.LocalizationClasses.Odometry;
 import org.firstinspires.ftc.teamcode.RobotClasses.LocalizationClasses.SimpleOdometry;
+import org.firstinspires.ftc.teamcode.RobotClasses.LocalizationClasses.TrajectoryCommand;
 import org.firstinspires.ftc.teamcode.RobotClasses.Subsystems.Grabber;
 import org.firstinspires.ftc.teamcode.RobotClasses.Subsystems.Gyro;
 import org.firstinspires.ftc.teamcode.RobotClasses.Subsystems.Intake;
 import org.firstinspires.ftc.teamcode.RobotClasses.Subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.RobotClasses.Subsystems.MecanumDrive;
+import org.firstinspires.ftc.teamcode.RobotClasses.util.Pose2D;
+
+import static java.lang.Thread.sleep;
 
 @TeleOp(name="Main: Teleop", group="Iterative Opmode")
 public class MainTeleop extends OpMode
@@ -71,6 +75,8 @@ public class MainTeleop extends OpMode
 
     private Odometry odometry;
     private SimpleOdometry simpleOdometry;
+
+    private TrajectoryCommand traj;
 
     boolean x_boolean, y_boolean;
 
@@ -125,6 +131,8 @@ public class MainTeleop extends OpMode
         odometry = new Odometry(drivetrain, gyro, leftOdometer, rightOdometer, backOdometer);
         simpleOdometry = new SimpleOdometry(drivetrain, gyro, leftOdometer, rightOdometer, backOdometer);
 
+        traj = new TrajectoryCommand(odometry, drivetrain);
+
 
         // Toggle Booleans
         x_boolean = false;
@@ -155,27 +163,22 @@ public class MainTeleop extends OpMode
         double strafe = gamepad1.left_stick_x;
         double turn = gamepad1.right_stick_x;
 
-        if(Math.abs(turn) > 0) {
-            drivetrain.driveStraight(forward, strafe);
-        }
-        else{
-            drivetrain.drive(forward, strafe, turn);
-        }
+        drivetrain.drive(forward, strafe, turn);
 
 
         // Toggle booleans
-        if(gamepad1.x) {
+        if(gamepad1.x || gamepad2.x) {
             x_boolean = !x_boolean;
         }
-        if(gamepad1.y) {
+        if(gamepad1.y || gamepad2.y) {
             y_boolean = !y_boolean;
         }
 
         // Intake On/Off
-        if(gamepad1.x) {
+        if(gamepad1.x || gamepad2.x) {
             intake.on();
         }
-        else if(gamepad1.b) {
+        else if(gamepad1.b || gamepad2.b) {
             intake.reverse();
         }
         else {
@@ -183,7 +186,7 @@ public class MainTeleop extends OpMode
         }
 
         // Shooter On/Off
-        if(gamepad1.right_trigger > 0) {
+        if(gamepad1.right_trigger > 0 || gamepad2.right_trigger > 0) {
             shooter.on();
         }
         else {
@@ -191,21 +194,41 @@ public class MainTeleop extends OpMode
         }
 
         // Indexer
-        if(gamepad1.a) {
+        if(gamepad1.a || gamepad2.a) {
             shooter.setIndexer(90);
         }
         else {
             shooter.setIndexer(-90);
         }
 
-        if(gamepad1.dpad_down) {
-            grabber.armDown();
+        // Grabber arm
+        if(gamepad1.dpad_down || gamepad2.dpad_down) {
+            grabber.armSetDown();
         }
-        else if(gamepad1.dpad_up) {
-            grabber.armUp();
+        else if(gamepad1.dpad_up || gamepad2.dpad_up) {
+            grabber.armSetUp();
         }
         else {
             grabber.off();
+        }
+
+        // Grabber servo
+        if(gamepad1.dpad_right || gamepad2.right_stick_button) {
+            grabber.openGrabber();
+        }
+        else if(gamepad1.dpad_left || gamepad2.left_stick_button) {
+            grabber.closeGrabber();
+        }
+
+
+        // Go to shooting point
+        if(gamepad1.right_bumper) {
+            traj.goToPoint(new Pose2D(20, -20, 90));
+        }
+
+        // Reset pose
+        if(gamepad1.back) {
+            odometry.resetPose();
         }
 
 
@@ -221,6 +244,10 @@ public class MainTeleop extends OpMode
         telemetry.addData("LeftEncoder", "Val: " + leftOdometer.getCurrentPosition());
         telemetry.addData("RightEncoder", "Val: " + rightOdometer.getCurrentPosition());
         telemetry.addData("backEncoder", "Val: " + backOdometer.getCurrentPosition());
+
+        telemetry.addData("Angle", gyro.getAngle());
+
+        telemetry.addData("Arm Motor", armMotor.getCurrentPosition());
     }
 
     @Override
