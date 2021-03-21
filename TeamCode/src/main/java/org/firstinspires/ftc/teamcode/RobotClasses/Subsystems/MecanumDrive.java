@@ -135,7 +135,7 @@ public class MecanumDrive {
 
     public void driveStraight(double forward, double strafe) {
         double setpoint = gyro.getAngle();
-        double offset = setpoint - (gyro.getAngle() * .05);
+        double offset = setpoint - (gyro.getAngle() * .08);
 
         drive(forward, strafe, offset);
 
