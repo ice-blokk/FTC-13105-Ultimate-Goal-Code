@@ -36,6 +36,11 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.ClassFactory;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
+import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
+import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.teamcode.RobotClasses.LocalizationClasses.Odometry;
 import org.firstinspires.ftc.teamcode.RobotClasses.LocalizationClasses.SimpleOdometry;
 import org.firstinspires.ftc.teamcode.RobotClasses.LocalizationClasses.TrajectoryCommand;
@@ -47,6 +52,8 @@ import org.firstinspires.ftc.teamcode.RobotClasses.Subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.RobotClasses.util.Pose2D;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+
+import java.util.List;
 
 @Autonomous(name="Main: Auto Linear", group="Autonomous")
 public class MainAutoLinear extends LinearOpMode {
@@ -76,6 +83,20 @@ public class MainAutoLinear extends LinearOpMode {
     private SimpleOdometry simpleOdometry;
 
     private TrajectoryCommand traj;
+
+    private static final String TFOD_MODEL_ASSET = "UltimateGoal.tflite";
+    private static final String LABEL_FIRST_ELEMENT = "Quad";
+    private static final String LABEL_SECOND_ELEMENT = "Single";
+
+    private static final String VUFORIA_KEY =
+            "AeO4IGj/////AAABmU63rhEa2UHcp6WYD9aPftR0Ng+l2Y1rTyE504+3KOuaDgvQMCW9M+GdjYidkvXsch5FEbYgsCtnACgS/CFcN6ZcJuyGALGfShSJ7+lZC5JOO4muO9G8GtoF+29tsSFLzUloVHHnC7dTpjxkOdJMfBiJWd5BlwVk08ESHIFRg4XoyCTrgkUAzljSW6u3b6uhW+IrtYvcocQMJude0+a8kckI5iN25AabaOcj108frbkVki0uTZzehjG4u2Ve2eUvNY7q7hqd3QtA0gB58K3wYnxpbWkbA/QActi/+ogNBdJb8bNUv1VGi32QDJrNabymUebURoM5fmq91Is9nUltgY5RifOhe8U3b/laxAX+5ZQB";
+
+    private VuforiaLocalizer vuforia;
+
+    private TFObjectDetector tfod;
+
+    private String caseString;
+
 
     @Override
     public void runOpMode() {
@@ -125,7 +146,6 @@ public class MainAutoLinear extends LinearOpMode {
         shooter = new Shooter(shooterMotor, indexer);
         grabber = new Grabber(armMotor, grabberServo);
 
-
         odometry = new Odometry(drivetrain, gyro, leftOdometer, rightOdometer, backOdometer);
         simpleOdometry = new SimpleOdometry(drivetrain, gyro, leftOdometer, rightOdometer, backOdometer);
 
@@ -133,7 +153,18 @@ public class MainAutoLinear extends LinearOpMode {
 
         telemetry.addData("Status", "Initialized");
 
+        initVuforia();
+        initTfod();
+
+        if (tfod != null) {
+            tfod.activate();
+        }
+        caseString = null;
+
         waitForStart();
+
+
+
         runtime.reset();
 
         //** MAIN LOOP **//
@@ -141,77 +172,63 @@ public class MainAutoLinear extends LinearOpMode {
 
             odometry.update();
             simpleOdometry.update();
-            /*
-            shooter.setIndexer(-90);
-            boolean finished = false;
-            // Driving
-            if(simpleOdometry.getCurrentVector2D().getX() < 40) {
-                drivetrain.drive(-.6, 0, 0);
-            }
-            else if(simpleOdometry.getCurrentVector2D().getX() > 40 && gyro.getAngle() < 70) {
-                drivetrain.drive(0, 0, -.5);
-            }
-            else if(simpleOdometry.getCurrentVector2D().getX() >= 40 && gyro.getAngle() >= 70 && finished == false) {
-                drivetrain.drive(0, 0, 0);
-                shooter.on();
-                sleepMil(1000);
-                shooter.setIndexer(90);
-                sleepMil(1500);
-                shooter.setIndexer(-90);
-                sleepMil(1500);
-                shooter.setIndexer(90);
-                sleepMil(1500);
-                shooter.setIndexer(-90);
-                sleepMil(1500);
-                shooter.setIndexer(90);
-                shooter.off();
-                sleepMil(1500);
-                drivetrain.drive(-.5, 0, 0);
-                sleepMil(1200);
-                drivetrain.drive(0, 0, 0);
-                finished = true;
-                stop();
-
-            }
-            else {
-                drivetrain.drive(0, 0, 0);
-                shooter.off();
-            }
-
-             */
-
-            shooter.setIndexer(-90);
-            driveWaypoint(new Pose2D(10, 10, 0));
-            sleepMil(3000);
-            driveWaypoint(new Pose2D(20, -10, 90));
-            /*
-            shooter.on();
-            sleepMil(1000);
-            shooter.setIndexer(90);
-            sleepMil(1500);
-            shooter.setIndexer(-90);
-            sleepMil(1500);
-            shooter.setIndexer(90);
-            sleepMil(1500);
-            shooter.setIndexer(-90);
-            sleepMil(1500);
-            shooter.setIndexer(90);
-            shooter.off();
-
-             */
-            stop();
-
-
-
-
 
             telemetry.addData("Status", "Run Time: " + runtime.toString());
 
-            telemetry.addData("Simple Odometry", "X Value (in): " + simpleOdometry.getCurrentVector2D().getX());
-            telemetry.addData("Simple Odometry", "Y Value (in): " + simpleOdometry.getCurrentVector2D().getY());
+            telemetry.addData("Odometry", "X Value (in): " + odometry.getCurrentVector2D().getX());
+            telemetry.addData("Odometry", "Y Value (in): " + odometry.getCurrentVector2D().getY());
 
             telemetry.addData("Angle", gyro.getAngle());
             telemetry.update();
+
+            // Detect Rings
+            if (tfod != null) {
+                List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
+                if (updatedRecognitions != null) {
+                    telemetry.addData("# Object Detected", updatedRecognitions.size());
+
+                    int i = 0;
+                    for (Recognition recognition : updatedRecognitions) {
+                        telemetry.addData(String.format("label (%d)", i), recognition.getLabel());
+                        caseString = recognition.getLabel();
+                        telemetry.addData(String.format("  left,top (%d)", i), "%.03f , %.03f",
+                                recognition.getLeft(), recognition.getTop());
+                        telemetry.addData(String.format("  right,bottom (%d)", i), "%.03f , %.03f",
+                                recognition.getRight(), recognition.getBottom());
+                    }
+                    telemetry.update();
+                }
+            }
+            telemetry.addData("caseString", caseString);
+            telemetry.update();
+
+            if(caseString != null) {
+                if(caseString.equals("Single")) {
+                    //single();
+                }
+                else if(caseString.equals("Quad")) {
+                    // quad();
+                }
+            }
+            else {
+                quad();
+            }
+
+            /*
+            sleepMil(10000);
+            stop();
+
+
+             */
+
+
+
+
+
+        }
+
+        if (tfod != null) {
+            tfod.shutdown();
         }
     } // end of active op mode
 
@@ -297,11 +314,183 @@ public class MainAutoLinear extends LinearOpMode {
         }
     }
 
+    public void armDown() {
+        while(armMotor.getCurrentPosition() < 1500) {
+            grabber.down();
+        }
+        grabber.off();
+    }
+
+    public void armUp() {
+        while(armMotor.getCurrentPosition() > 10) {
+            grabber.up();
+        }
+        grabber.off();
+    }
+
     public void driveWaypoint(Pose2D targetWaypoint) {
-        while(!traj.atX(targetWaypoint) || !traj.atY(targetWaypoint) || !traj.atRotation(targetWaypoint)) {
+        odometry.update();
+        traj.setDrivePower(.6);
+        traj.setRotatePower(.3);
+        while(!traj.atWaypoint(targetWaypoint)) {
+            odometry.update();
             traj.goToPoint(targetWaypoint);
         }
-            drivetrain.drive(0, 0, 0);
+        drivetrain.drive(0, 0, 0);
+    }
+
+    private void initTfod() {
+        int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
+                "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        // the line above gives an error in android studio but builds fine in onbot java
+        TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
+        tfodParameters.minResultConfidence = 0.8f;
+        tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
+        tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_FIRST_ELEMENT, LABEL_SECOND_ELEMENT);
+    }
+
+    private void initVuforia() {
+        /*
+         * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
+         */
+        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
+
+        parameters.vuforiaLicenseKey = VUFORIA_KEY;
+        parameters.cameraDirection = VuforiaLocalizer.CameraDirection.BACK;
+        parameters.cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
+
+        //  Instantiate the Vuforia engine
+        vuforia = ClassFactory.getInstance().createVuforia(parameters);
+
+        // Loading trackables is not necessary for the TensorFlow Object Detection engine.
+    }
+
+    private void single() {
+        shooter.setIndexer(-90);
+
+        driveWaypoint(new Pose2D(0, 15, 0)); // move to the left of the rings
+        sleepMil(250);
+        driveWaypoint(new Pose2D(45, 15 ,0)); // go to wobble square
+        sleepMil(250);
+        armDown();
+        grabber.openGrabber();
+        sleepMil(250);
+
+        driveWaypoint(new Pose2D(0, 15, 0)); // go to the left of the rings
+        sleepMil(250);
+        driveWaypoint(new Pose2D(0, -10, 0)); // go to wobble goal
+        grabber.closeGrabber();
+        sleepMil(350);
+        driveWaypoint(new Pose2D(0, 15, 0)); // move to the left of the rings
+        driveWaypoint(new Pose2D(60, 15 ,0)); // go to wobble square
+        grabber.openGrabber();
+        sleepMil(250);
+
+        driveWaypoint(new Pose2D(40, 5, 90)); // go to shooter position
+        shooter.on(); // start shooter sequence
+        sleepMil(750);
+        shooter.setIndexer(90); //shoot
+        sleepMil(500);
+        shooter.setIndexer(-90); // reset
+        sleepMil(500);
+        shooter.setIndexer(90); // shoot
+        sleepMil(500);
+        shooter.setIndexer(-90); // reset
+        sleepMil(500);
+        shooter.setIndexer(90); // shoot
+        shooter.off();
+
+        driveWaypoint(new Pose2D(30, 10, 90)); // drive up to line
+        grabber.closeGrabber();
+        armUp();
+
+        stop();
+    }
+
+    private void quad() {
+        shooter.setIndexer(-90);
+
+        driveWaypoint(new Pose2D(0, 15, 0)); // move to the left of the rings
+        sleepMil(250);
+        driveWaypoint(new Pose2D(60, 15 ,0));
+        driveWaypoint(new Pose2D(80, 0 ,0)); // go to wobble square
+        sleepMil(250);
+        armDown();
+        grabber.openGrabber();
+        sleepMil(250);
+
+        driveWaypoint(new Pose2D(0, 15, 0)); // go to the left of the rings
+        sleepMil(250);
+        driveWaypoint(new Pose2D(0, -10, 0)); // go to wobble goal
+        grabber.closeGrabber();
+        sleepMil(350);
+        driveWaypoint(new Pose2D(0, 15, 0)); // move to the left of the rings
+        driveWaypoint(new Pose2D(60, 15 ,0));
+        driveWaypoint(new Pose2D(80, 0 ,0)); // go to wobble square
+        grabber.openGrabber();
+        sleepMil(250);
+
+        driveWaypoint(new Pose2D(40, 5, 90)); // go to shooter position
+        shooter.on(); // start shooter sequence
+        sleepMil(750);
+        shooter.setIndexer(90); //shoot
+        sleepMil(500);
+        shooter.setIndexer(-90); // reset
+        sleepMil(500);
+        shooter.setIndexer(90); // shoot
+        sleepMil(500);
+        shooter.setIndexer(-90); // reset
+        sleepMil(500);
+        shooter.setIndexer(90); // shoot
+        shooter.off();
+
+        driveWaypoint(new Pose2D(30, 10, 90)); // drive up to line
+        grabber.closeGrabber();
+        armUp();
+
+        stop();
+
+    }
+
+    private void noRings() {
+        shooter.setIndexer(-90);
+
+        driveWaypoint(new Pose2D(30, 0 ,0)); // go to wobble square
+        sleepMil(250);
+        armDown();
+        grabber.openGrabber();
+        sleepMil(250);
+        driveWaypoint(new Pose2D(0, 0, 0)); // go to origin
+        sleepMil(250);
+        driveWaypoint(new Pose2D(0, -10, 0)); // go to wobble goal
+        grabber.closeGrabber();
+        sleepMil(250);
+        driveWaypoint(new Pose2D(50, 0, 0)); // drop off wobble goal
+        grabber.openGrabber();
+        sleepMil(250);
+
+        driveWaypoint(new Pose2D(40, 5, 90)); // go to shooter position
+        shooter.on(); // start shooter sequence
+        sleepMil(750);
+        shooter.setIndexer(90); //shoot
+        sleepMil(500);
+        shooter.setIndexer(-90); // reset
+        sleepMil(500);
+        shooter.setIndexer(90); // shoot
+        sleepMil(500);
+        shooter.setIndexer(-90); // reset
+        sleepMil(500);
+        shooter.setIndexer(90); // shoot
+        shooter.off();
+
+        driveWaypoint(new Pose2D(60, 10, 90)); // drive up to line
+        grabber.closeGrabber();
+        armUp();
+
+        stop();
+
+
+
     }
 
 }// end of class
