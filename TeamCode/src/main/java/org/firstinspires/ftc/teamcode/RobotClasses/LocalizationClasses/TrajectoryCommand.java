@@ -55,8 +55,8 @@ public class TrajectoryCommand {
     }
 
     public void goToPoint(Pose2D targetWaypoint) {
-        PIDController forwardPID = new PIDController(.02, .001, .01);
-        PIDController strafePID = new PIDController(.02, .001, .01);
+        PIDController forwardPID = new PIDController(.08, .001, .01);
+        PIDController strafePID = new PIDController(.08, .001, .01);
         PIDController rotatePID = new PIDController(.01, 1, .001);
 
         forwardPID.setOutputRange(-drivePower, drivePower);

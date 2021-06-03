@@ -119,6 +119,7 @@ public class MainTeleop extends OpMode
         imu = hardwareMap.get(BNO055IMU.class, "imu");
 
         indexer = hardwareMap.get(Servo.class, "indexerServo");
+        indexer.scaleRange(0, 180);
         grabberServo = hardwareMap.get(Servo.class, "grabberServo");
 
         gyro = new Gyro(imu);
@@ -195,13 +196,12 @@ public class MainTeleop extends OpMode
 
         // Indexer
         if(gamepad1.a || gamepad2.a) {
-            shooter.setIndexer(90);
+            shooter.setIndexer(0);
         }
         else {
-            shooter.setIndexer(-90);
+            shooter.setIndexer(.65);
         }
 
-        // Grabber arm
         if(gamepad1.dpad_down || gamepad2.dpad_down) {
             grabber.armSetDown();
         }
@@ -212,7 +212,6 @@ public class MainTeleop extends OpMode
             grabber.off();
         }
 
-        // Grabber servo
         if(gamepad1.dpad_right || gamepad2.right_stick_button) {
             grabber.openGrabber();
         }
@@ -220,13 +219,19 @@ public class MainTeleop extends OpMode
             grabber.closeGrabber();
         }
 
-
-        // Go to shooting point
-        if(gamepad1.right_bumper) {
-            traj.goToPoint(new Pose2D(20, -20, 90));
+        if(gamepad2.back) {
+            //grabber.armSetDown();
+            armMotor.setPower(.5);
+        }
+        else if(gamepad2.start) {
+            //grabber.armSetUp();
+            armMotor.setPower(-.5);
         }
 
-        // Reset pose
+        if(gamepad1.right_bumper) {
+            traj.goToPoint(new Pose2D(-43, 62, 0));
+        }
+
         if(gamepad1.back) {
             odometry.resetPose();
         }
@@ -248,6 +253,7 @@ public class MainTeleop extends OpMode
         telemetry.addData("Angle", gyro.getAngle());
 
         telemetry.addData("Arm Motor", armMotor.getCurrentPosition());
+        telemetry.addData("Shooter Servo", indexer.getPosition());
     }
 
     @Override

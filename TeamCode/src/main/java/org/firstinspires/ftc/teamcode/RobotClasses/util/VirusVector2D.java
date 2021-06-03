@@ -3,11 +3,19 @@ package org.firstinspires.ftc.teamcode.RobotClasses.util;
 import java.sql.SQLOutput;
 import java.util.Arrays;
 
+/**
+ * We needed a way to rotate a set of points on a cartesian plane
+ * without changing the values of those points. This is used in the
+ * odometry.
+ */
+
 
 /**
  * <a href = "https://github.com/Centennial-FTC-Robotics/Virus2019-2020/blob/master/TeamCode/src/main/java/org/virus/util/Vector2D.java">
- *     literally just this doc
+ *     literally just this doc.
  *     </a>
+ *     <hr>
+ *         This Vector2d can accept deltas rather than concrete points.
  */
 public class VirusVector2D {
 

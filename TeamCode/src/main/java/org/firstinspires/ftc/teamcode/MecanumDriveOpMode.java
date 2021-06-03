@@ -33,43 +33,55 @@ import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.RobotClasses.Gyro;
+import org.firstinspires.ftc.teamcode.RobotClasses.Constants;
+import org.firstinspires.ftc.teamcode.RobotClasses.Subsystems.Gyro;
 import org.firstinspires.ftc.teamcode.RobotClasses.LocalizationClasses.Odometry;
-import org.firstinspires.ftc.teamcode.RobotClasses.MecanumDrive;
+import org.firstinspires.ftc.teamcode.RobotClasses.Subsystems.MecanumDrive;
 import org.firstinspires.ftc.teamcode.RobotClasses.LocalizationClasses.SimpleOdometry;
 
-@TeleOp(name="Basic: Mecanum Drive Op Mode", group="Iterative Opmode")
-public class MecanumDriveOpMode extends OpMode
+@TeleOp(name="Test: Mecanum Drive Op Mode", group="Iterative Opmode")
+public class MecanumDriveOpMode extends Constants
 {
     private ElapsedTime runtime = new ElapsedTime();
-
-    private DcMotor frontLeft;
-    private DcMotor frontRight;
-    private DcMotor backLeft;
-    private DcMotor backRight;
-
-    private DcMotor leftOdometer, rightOdometer, backOdometer;
-    private BNO055IMU imu;
 
     private MecanumDrive drivetrain;
     private SimpleOdometry simpleOdometry;
     private Odometry odometry;
     private Gyro gyro;
 
+    // Drive motors
+    public final DcMotor
+            frontLeft = hardwareMap.get(DcMotor.class, "frontLeftDrive"),
+            frontRight = hardwareMap.get(DcMotor.class, "frontRightDrive"),
+            backLeft = hardwareMap.get(DcMotor.class, "backLeftDrive"),
+            backRight = hardwareMap.get(DcMotor.class, "backRightDrive");
+
+    public final DcMotor
+            leftOdometer = hardwareMap.get(DcMotor.class, "frontLeftDrive"),
+            rightOdometer = hardwareMap.get(DcMotor.class, "frontRightDrive"),
+            backOdometer = hardwareMap.get(DcMotor.class, "backLeftDrive");
+
+    public final DcMotor
+            intake = hardwareMap.get(DcMotor.class, "intakeMotor"),
+            arm = hardwareMap.get(DcMotor.class, "armMotor");
+
+    public final DcMotorEx
+            shooter = hardwareMap.get(DcMotorEx.class, "shooterMotor");
+
+    public final Servo
+            indexer = hardwareMap.get(Servo.class, "indexerServo"),
+            grabber = hardwareMap.get(Servo.class, "grabberServo");
+
+    public final BNO055IMU
+            imu = hardwareMap.get(BNO055IMU.class, "imu");
+
     @Override
     public void init() {
         telemetry.addData("Status", "Initialized");
-
-        frontLeft = hardwareMap.get(DcMotor.class, "frontLeftDrive");
-        frontRight = hardwareMap.get(DcMotor.class, "frontRightDrive");
-        backLeft = hardwareMap.get(DcMotor.class, "backLeftDrive");
-        backRight = hardwareMap.get(DcMotor.class, "backRightDrive");
-
-        leftOdometer = hardwareMap.get(DcMotor.class, "frontLeftDrive");
-        rightOdometer = hardwareMap.get(DcMotor.class, "frontRightDrive");
-        backOdometer = hardwareMap.get(DcMotor.class, "backLeftDrive");
 
         // Reset encoders
         leftOdometer.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -91,7 +103,6 @@ public class MecanumDriveOpMode extends OpMode
         backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        imu = hardwareMap.get(BNO055IMU.class, "imu");
         gyro = new Gyro(imu);
 
         drivetrain = new MecanumDrive(frontRight, frontLeft, backRight, backLeft, gyro);
@@ -119,8 +130,8 @@ public class MecanumDriveOpMode extends OpMode
             simpleOdometry.resetPose();
         }
 
-        double forward = gamepad1.left_stick_y;
-        double strafe = gamepad1.left_stick_x;
+        double strafe = gamepad1.left_stick_y;
+        double forward = gamepad1.left_stick_x;
         double turn = gamepad1.right_stick_x;
 
         drivetrain.drive(forward, strafe, turn);
@@ -132,6 +143,7 @@ public class MecanumDriveOpMode extends OpMode
         telemetry.addData("Odometry", "X: " + odometry.getCurrentPose().getX());
         telemetry.addData("Odometry", "Y: " + odometry.getCurrentPose().getY());
         telemetry.addData("Odometry", "Angle: " + odometry.getCurrentPose().getRotation());
+
         telemetry.addData("LeftEncoder", "Val: " + leftOdometer.getCurrentPosition());
         telemetry.addData("RightEncoder", "Val: " + rightOdometer.getCurrentPosition());
         telemetry.addData("backEncoder", "Val: " + backOdometer.getCurrentPosition());

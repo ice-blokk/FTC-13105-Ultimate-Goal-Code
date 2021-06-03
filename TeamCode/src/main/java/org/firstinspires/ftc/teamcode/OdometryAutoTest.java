@@ -31,22 +31,20 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.RobotClasses.Gyro;
-import org.firstinspires.ftc.teamcode.RobotClasses.MecanumDrive;
+import org.firstinspires.ftc.teamcode.RobotClasses.Subsystems.Gyro;
+import org.firstinspires.ftc.teamcode.RobotClasses.Subsystems.MecanumDrive;
 import org.firstinspires.ftc.teamcode.RobotClasses.LocalizationClasses.SimpleOdometry;
-import org.firstinspires.ftc.teamcode.RobotClasses.LocalizationClasses.Vector2D;
+import org.firstinspires.ftc.teamcode.RobotClasses.util.Vector2D;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 
-@Autonomous(name="Auto: Odometry Auto Test", group="Iterative Opmode")
-@Disabled
+@Autonomous(name="Test: Odometry Auto Test", group="Iterative Opmode")
 public class OdometryAutoTest extends OpMode
 {
     private ElapsedTime runtime = new ElapsedTime();

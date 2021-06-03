@@ -69,7 +69,7 @@ public class MyOBJCustomModel extends LinearOpMode {
      * and paste it in to your code on the next line, between the double quotes.
      */
     private static final String VUFORIA_KEY =
-            "AXSMEWz/////AAABmXindJ41FU7dqka7VWsVrrdl63f0OizJlhSQ0ne6I+tFB3+LMayyYDcS5+1+oc/dm5LQTwqw/sbnUxm4SNJAK/8qNrQXAmwdUns8AVa5RVkHLDIn69qalfO7GCFqo/cfOAJTEpCAms6O9oK20qHpwa/SJ9GOpdQDPu71+tVuJzXm3ZJTy4zSIfn9yxse5+K8Hhbi8QuoIFmlUEmJLrrwoEGYR02cp/oihTGufFvEsplZTq5uGtdwn9Q5O7vW+b/+Rk1B6W0W/kLobli7tB0TZpJli3pw4KzOoD6vuIyS2nRcmM221bmeBia/YCf+4/xACnPYzs3pQC2DVA05ls9MB7DFPit2Z1QqIUxae2SHRFLq";
+            "AeO4IGj/////AAABmU63rhEa2UHcp6WYD9aPftR0Ng+l2Y1rTyE504+3KOuaDgvQMCW9M+GdjYidkvXsch5FEbYgsCtnACgS/CFcN6ZcJuyGALGfShSJ7+lZC5JOO4muO9G8GtoF+29tsSFLzUloVHHnC7dTpjxkOdJMfBiJWd5BlwVk08ESHIFRg4XoyCTrgkUAzljSW6u3b6uhW+IrtYvcocQMJude0+a8kckI5iN25AabaOcj108frbkVki0uTZzehjG4u2Ve2eUvNY7q7hqd3QtA0gB58K3wYnxpbWkbA/QActi/+ogNBdJb8bNUv1VGi32QDJrNabymUebURoM5fmq91Is9nUltgY5RifOhe8U3b/laxAX+5ZQB";
 
     /**
      * {@link #vuforia} is the variable we will use to store our instance of the Vuforia
